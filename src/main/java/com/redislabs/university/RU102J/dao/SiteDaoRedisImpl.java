@@ -5,6 +5,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class SiteDaoRedisImpl implements SiteDao {
     private final JedisPool jedisPool;
@@ -42,7 +43,15 @@ public class SiteDaoRedisImpl implements SiteDao {
     @Override
     public Set<Site> findAll() {
         // START Challenge #1
-        return Collections.emptySet();
-        // END Challenge #1
+        try (Jedis jedis = jedisPool.getResource()) {
+            final String pattern = RedisSchema.getSiteHashKeyPrefix() + "*";
+            return jedis.keys(pattern).stream()
+                .map(key -> jedis.hgetAll(key))
+                .filter(fields -> (fields != null) && !fields.isEmpty())
+                .filter(fields -> fields.containsKey("id") && fields.containsKey("capacity") && fields.containsKey("panels"))
+                .map(Site::new)
+                .collect(Collectors.toSet());
+        }
     }
+    
 }

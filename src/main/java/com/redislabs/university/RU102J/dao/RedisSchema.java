@@ -13,10 +13,16 @@ import java.time.ZonedDateTime;
  * used by this application.
  */
 public class RedisSchema {
+
+
+
+    static String getSiteHashKeyPrefix() {
+        return KeyHelper.getKey("sites:info:");
+    }
     // sites:info:[siteId]
     // Redis type: hash
     static String getSiteHashKey(long siteId) {
-        return KeyHelper.getKey("sites:info:" + siteId);
+        return getSiteHashKeyPrefix() + siteId;
     }
 
     // sites:ids
