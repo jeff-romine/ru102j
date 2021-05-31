@@ -44,8 +44,7 @@ public class SiteDaoRedisImpl implements SiteDao {
     public Set<Site> findAll() {
         // START Challenge #1
         try (Jedis jedis = jedisPool.getResource()) {
-            final String pattern = RedisSchema.getSiteHashKeyPrefix() + "*";
-            return jedis.keys(pattern).stream()
+            return jedis.smembers(RedisSchema.getSiteIDsKey()).stream()
                 .map(key -> jedis.hgetAll(key))
                 .filter(fields -> (fields != null) && !fields.isEmpty())
                 .filter(fields -> fields.containsKey("id") && fields.containsKey("capacity") && fields.containsKey("panels"))
