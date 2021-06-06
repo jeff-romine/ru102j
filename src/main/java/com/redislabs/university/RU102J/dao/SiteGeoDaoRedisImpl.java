@@ -91,7 +91,7 @@ public class SiteGeoDaoRedisImpl implements SiteGeoDao {
              // START Challenge #5
              // TODO: Challenge #5: Get the sites matching the geo query, store them
 
-             List<GeoRadiusResponse> radiusResponses =
+             final List<GeoRadiusResponse> radiusResponses =
                  jedis.georadius(RedisSchema.getSiteGeoKey(), coord.getLng(),
                                  coord.getLat(), radius, radiusUnit);
 
@@ -103,10 +103,10 @@ public class SiteGeoDaoRedisImpl implements SiteGeoDao {
                      .map(Site::new).collect(Collectors.toSet());
 
              // START Challenge #5
-             Pipeline pipeline = jedis.pipelined();
-             Map<Long, Response<Double>> scores = new HashMap<>(sites.size());
+             final Pipeline pipeline = jedis.pipelined();
+             final Map<Long, Response<Double>> scores = new HashMap<>(sites.size());
              // TODO: Challenge #5: Add the code that populates the scores HashMap...
-             for (Site site : sites) {
+             for (final Site site : sites) {
                  final Response<Double> score =
                      pipeline.zscore(RedisSchema.getCapacityRankingKey(),String.valueOf(site.getId()));
                  scores.put(site.getId(), score);
@@ -115,7 +115,7 @@ public class SiteGeoDaoRedisImpl implements SiteGeoDao {
              pipeline.sync();
              // END Challenge #5
 
-             for (Site site : sites) {
+             for (final Site site : sites) {
                  if (scores.get(site.getId()).get() >= capacityThreshold) {
                      results.add(site);
                  }
