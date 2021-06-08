@@ -6,6 +6,8 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.Transaction;
 
+import java.time.ZonedDateTime;
+
 public class RateLimiterSlidingDaoRedisImpl implements RateLimiter {
 
     private final JedisPool jedisPool;
@@ -23,15 +25,17 @@ public class RateLimiterSlidingDaoRedisImpl implements RateLimiter {
     @Override
     public void hit(String name) throws RateLimitExceededException {
         // START CHALLENGE #7
-        final String rateLimiterKey = KeyHelper.getKey("sliding-window:" + windowSizeMS + ":" + name + ":" + maxHits);
         try (final Jedis jedis = jedisPool.getResource()) {
+            final String rateLimiterKey = KeyHelper.getKey("limiter:" + windowSizeMS + ":" + name + ":" + maxHits);
+
+            //final long now = System.currentTimeMillis();
+            final long now = ZonedDateTime.now().toInstant().toEpochMilli();
+
             final Transaction tx = jedis.multi();
-            final long currentTimeMillis = System.currentTimeMillis();
-            final String member = "" +  currentTimeMillis + "-" + Math.random();
+            final String member = now + "-" + Math.random();
 
-
-            final Response<Long> zaddResult = tx.zadd(rateLimiterKey, (double) currentTimeMillis, member);
-            final Response<Long> remRangeResult = tx.zremrangeByScore(rateLimiterKey, 0.0,currentTimeMillis - windowSizeMS);
+            tx.zadd(rateLimiterKey, (double) now, member);
+            tx.zremrangeByScore(rateLimiterKey, 0,now - windowSizeMS);
             final Response<Long> hits = tx.zcard(rateLimiterKey);
             tx.exec();
 
